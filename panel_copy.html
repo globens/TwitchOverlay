@@ -72,30 +72,43 @@
     }
 
     async function setkara(index, minuty) {
-      const kara = KARY[index];
-      const sekundy = minuty * 60;
-      const now = Date.now();
+  const kara = KARY[index];
+  const sekundy = minuty * 60;
+  const now = Date.now();
 
-      let data = await getData();
-      let found = data.find(k => k.id === kara.id);
+  let data = await getData();
+  let found = data.find(k => k.id === kara.id);
 
-      if (found) {
-        if (found.paused && found.timeLeft) {
-          found.timeLeft += sekundy * 1000;
-        } else {
-          const aktualny = found.endTime > now ? found.endTime : now;
-          found.endTime = aktualny + sekundy * 1000;
-        }
-      } else {
-        data.push({
-          id: kara.id,
-          nazwa: kara.nazwa,
-          endTime: now + sekundy * 1000
-        });
-      }
+  // Czy system jest zapauzowany?
+  const systemPaused = data.every(k => k.paused);
 
-      await saveData(data);
+  if (found) {
+    if (found.paused && found.timeLeft) {
+      found.timeLeft += sekundy * 1000;
+    } else {
+      const aktualny = found.endTime > now ? found.endTime : now;
+      found.endTime = aktualny + sekundy * 1000;
     }
+  } else {
+    if (systemPaused) {
+      data.push({
+        id: kara.id,
+        nazwa: kara.nazwa,
+        paused: true,
+        timeLeft: sekundy * 1000
+      });
+    } else {
+      data.push({
+        id: kara.id,
+        nazwa: kara.nazwa,
+        endTime: now + sekundy * 1000
+      });
+    }
+  }
+
+  await saveData(data);
+}
+
 
     async function pauseAll() {
       const now = Date.now();
