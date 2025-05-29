@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Kary z JSON</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      font-family: Arial, sans-serif;
+    }
+    .overlay {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      color: #00ff88;
+      font-size: 22px;
+      line-height: 1.6em;
+    }
+    .kara {
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay" id="karaList"></div>
+
+  <script>
+    const KARY = [
+      { id: 'chod', nazwa: "🚶‍♀️‍➡️ Tylko chodzenie" },
+      { id: 'skok', nazwa: "🧑‍🦽‍➡️ Zakaz skakania" },
+      { id: 'leczenie', nazwa: "🩺 Zakaz leczenia" },
+      { id: 'zbroja', nazwa: "🪖 Brak zbroi" },
+      { id: 'bron', nazwa: "⚔️ Brak broni" }
+    ];
+
+    async function loadData() {
+      try {
+        const res = await fetch('kary.json?_=' + new Date().getTime());
+        const data = await res.json();
+        updateView(data);
+      } catch (err) {
+        console.error("Błąd wczytywania kary.json:", err);
+      }
+    }
+
+function updateView(aktywneKary) {
+  const lista = document.getElementById('karaList');
+  lista.innerHTML = '';
+  const teraz = Date.now();
+
+  KARY.forEach(k => {
+    const aktywna = aktywneKary.find(a => a.id === k.id);
+    let display = `${k.nazwa}`;
+
+    if (aktywna) {
+      let left = 0;
+      let paused = false;
+
+      if (aktywna.paused) {
+        left = Math.floor(aktywna.timeLeft / 1000);
+        paused = true;
+      } else if (aktywna.endTime > teraz) {
+        left = Math.floor((aktywna.endTime - teraz) / 1000);
+      }
+
+      const min = Math.floor(left / 60);
+      const sec = (left % 60).toString().padStart(2, '0');
+
+      if (left > 0) {
+        display += paused ? ` ⏸ ${min}:${sec}` : ` ⏳ ${min}:${sec}`;
+      }
+    }
+
+    const el = document.createElement('div');
+    el.className = 'kara';
+    el.textContent = display;
+    lista.appendChild(el);
+  });
+}
+
+
+
+    setInterval(loadData, 1000);
+  </script>
+</body>
+</html>

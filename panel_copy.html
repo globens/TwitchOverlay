@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel kar</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #111;
+      color: #eee;
+    }
+
+    .kara {
+      background: #222;
+      margin-bottom: 12px;
+      padding: 12px;
+      border-radius: 8px;
+    }
+
+    .kara button {
+      margin-right: 6px;
+      padding: 6px 12px;
+      background: #333;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .kara button:hover {
+      background: #444;
+    }
+
+    .controls {
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Panel kar</h2>
+
+  <div class="controls">
+    <button onclick="pauseAll()">⏸ Pauzuj wszystkie</button>
+    <button onclick="resumeAll()">▶️ Wznów wszystkie</button>
+  </div>
+
+  <div id="karaPanel"></div>
+
+  <script>
+    const KARY = [
+      { id: 'chod', nazwa: "🚶‍♀️‍➡️ Tylko chodzenie" },
+      { id: 'skok', nazwa: "🧑‍🦽‍➡️ Zakaz skakania" },
+      { id: 'leczenie', nazwa: "🩺 Zakaz leczenia" },
+      { id: 'zbroja', nazwa: "🪖 Brak zbroi" },
+      { id: 'bron', nazwa: "⚔️ Brak broni" }
+    ];
+
+    async function getData() {
+      const res = await fetch('kary.json');
+      return await res.json();
+    }
+
+    async function saveData(data) {
+      // NIE filtrujemy danych! Musimy zachować paused, timeLeft itd.
+      console.log("Zapisuję dane:", data);
+      await fetch('save.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+    }
+
+    async function setkara(index, minuty) {
+      const kara = KARY[index];
+      const sekundy = minuty * 60;
+      const now = Date.now();
+
+      let data = await getData();
+      let found = data.find(k => k.id === kara.id);
+
+      if (found) {
+        if (found.paused && found.timeLeft) {
+          found.timeLeft += sekundy * 1000;
+        } else {
+          const aktualny = found.endTime > now ? found.endTime : now;
+          found.endTime = aktualny + sekundy * 1000;
+        }
+      } else {
+        data.push({
+          id: kara.id,
+          nazwa: kara.nazwa,
+          endTime: now + sekundy * 1000
+        });
+      }
+
+      await saveData(data);
+    }
+
+    async function pauseAll() {
+      const now = Date.now();
+      let data = await getData();
+
+      data = data.map(k => {
+        const timeLeft = Math.max(0, k.endTime - now);
+        return {
+          ...k,
+          paused: true,
+          timeLeft: timeLeft
+        };
+      });
+
+      await saveData(data);
+    }
+
+    async function resumeAll() {
+      const now = Date.now();
+      let data = await getData();
+
+      data = data.map(k => {
+        if (k.paused && k.timeLeft) {
+          return {
+            ...k,
+            paused: false,
+            timeLeft: undefined,
+            endTime: now + k.timeLeft
+          };
+        }
+        return k;
+      });
+
+      await saveData(data);
+    }
+
+    async function removeKara(index) {
+      const kara = KARY[index];
+      let data = await getData();
+      data = data.filter(k => k.id !== kara.id);
+      await saveData(data);
+    }
+
+    function initPanel() {
+      const panel = document.getElementById("karaPanel");
+      KARY.forEach((k, index) => {
+        const div = document.createElement("div");
+        div.className = "kara";
+        div.innerHTML = `
+  <strong>${k.nazwa}</strong><br>
+  <button onclick="setkara(${index}, 1)">+1 min</button>
+  <button onclick="setkara(${index}, 5)">+5 min</button>
+  <button onclick="setkara(${index}, 10)">+10 min</button>
+  <button onclick="setkara(${index}, 20)">+20 min</button>
+  <button onclick="removeKara(${index})">🗑 Usuń</button>
+`;
+        panel.appendChild(div);
+      });
+    }
+
+    window.onload = initPanel;
+  </script>
+</body>
+</html>
