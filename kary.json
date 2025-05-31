@@ -1,1 +1,32 @@
-[{"id":"chod","nazwa":"🚶‍♀️‍➡️ Tylko chodzenie","endTime":1748532485998,"paused":true,"timeLeft":1194037}]
+[
+  {
+    "id": "chod",
+    "nazwa": "🚶‍♀️‍➡️ Tylko chodzenie",
+    "paused": true,
+    "timeLeft": 1197697
+  },
+  {
+    "id": "leczenie",
+    "nazwa": "🩺 Zakaz leczenia",
+    "paused": true,
+    "timeLeft": 597697
+  },
+  {
+    "id": "skok",
+    "nazwa": "🧑‍🦽‍➡️ Zakaz skakania",
+    "paused": true,
+    "timeLeft": 597697
+  },
+  {
+    "id": "zbroja",
+    "nazwa": "🪖 Brak zbroi",
+    "paused": false,
+    "endTime": 0
+  },
+  {
+    "id": "bron",
+    "nazwa": "⚔️ Brak broni",
+    "paused": false,
+    "endTime": 0
+  }
+]

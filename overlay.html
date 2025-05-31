@@ -1,0 +1,60 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Overlay kar</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      font-family: Arial, sans-serif;
+    }
+    #karaList {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      color: #00ff88;
+      font-size: 22px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 10px;
+      border-radius: 8px;
+      line-height: 1.6em;
+    }
+  </style>
+</head>
+<body>
+  <div id="karaList">Ładowanie...</div>
+  <script>
+    async function loadKary() {
+      try {
+        const res = await fetch("/data?_=" + new Date().getTime());
+        const kary = await res.json();
+        const teraz = Date.now();
+        let html = "";
+
+        kary.forEach(k => {
+          let left = 0;
+          if (k.paused && k.timeLeft) {
+            left = k.timeLeft;
+          } else if (!k.paused && k.endTime > teraz) {
+            left = k.endTime - teraz;
+          }
+          if (left > 0) {
+            const min = Math.floor(left / 60000);
+            const sec = Math.floor((left % 60000) / 1000).toString().padStart(2, "0");
+            html += `${k.nazwa} ${k.paused ? "⏸" : "⏳"} ${min}:${sec}<br>`;
+          }
+        });
+
+        document.getElementById("karaList").innerHTML = html;
+      } catch (err) {
+        document.getElementById("karaList").innerText = "Błąd wczytywania kar.";
+      }
+    }
+
+    setInterval(loadKary, 1000);
+  </script>
+</body>
+</html>
